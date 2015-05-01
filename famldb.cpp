@@ -2,7 +2,7 @@
 #include <QtSql/QtSql>
 
 #define logstbl "logs (  id integer primary key autoincrement, msg varchar, dt date default CURRENT_DATE );"
-#define postcatstbl "postcat ( id integer primary key autoincrement, name varchar, active integer 1 );"
+#define postcatstbl "postcat ( id integer primary key autoincrement, name varchar, active integer default 1 );"
 
 QSqlDatabase db;
 FamlDb * faml = NULL;
@@ -91,9 +91,47 @@ QStringList FamlDb::GetLogs() {
 }
 
 FAMLRESULT FamlDb::StoreNewPostCat(QString str) {
+    QSqlQuery query(db);
+    auto q = QString("INSERT INTO postcat (name) values ('%1');").arg(str);
+
+    if(!query.exec(q)) {
+        qDebug() << query.lastError();
+        return FAMLFAIL;
+    }
+
     return FAMLOK;
 }
 
 FAMLRESULT FamlDb::StorePostCat(int id, QString str, bool isActive) {
+    QSqlQuery query(db);
+    auto q = QString("UPDATE postcat SET name = '%1', active = %2 WHERE id = %3;")
+            .arg(str).arg(isActive).arg(id);
+
+    if(!query.exec(q)) {
+        qDebug() << query.lastError();
+        return FAMLFAIL;
+    }
+
     return FAMLOK;
+}
+
+QList<postCat> FamlDb::GetPostCats() {
+    QList<postCat> lst;
+    QSqlQuery query(db);
+    QString q("SELECT id, name, active FROM postcat ORDER BY name DESC;");
+
+    if(!query.exec(q)) {
+        qDebug() << query.lastError();
+    } else {
+        while(query.next()) {
+            postCat cat = { query.value("id").toInt(),
+                            query.value("name").toString(),
+                            query.value("active").toBool()
+                            };
+
+            lst << cat;
+        }
+    }
+
+    return lst;
 }

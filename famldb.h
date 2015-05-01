@@ -8,6 +8,12 @@ typedef int FAMLRESULT;
 #include <QtSql/QSql>
 #include <QStringList>
 
+typedef struct {
+    int id;
+    QString name;
+    bool isActive;
+} postCat;
+
 class FamlDb
 {
 public:
@@ -18,6 +24,7 @@ public:
 
     FAMLRESULT StoreNewPostCat(QString str);
     FAMLRESULT StorePostCat(int id, QString str, bool isActive);
+    QList<postCat> GetPostCats();
 
 private:
     FamlDb();

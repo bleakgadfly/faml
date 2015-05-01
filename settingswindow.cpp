@@ -10,11 +10,19 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::SettingsWindow)
 {
+    auto * db = FamlDb::Instance();
+    auto lst = db->GetPostCats();
+    db->StoreLog(QString("Starting Faml application"));
+
     ui->setupUi(this);
     ui->postCats->addItem("");
-    ui->postCats->addItem("Cato", QVariant::fromValue(postCatsData(12, true)));
-    ui->postCats->addItem("Lisa", QVariant::fromValue(postCatsData(12, false)));
-    ui->postCats->addItem("Hus og hjem", QVariant::fromValue(postCatsData(12, true)));
+
+    for(int i = 0; i < lst.count(); i++) {
+        auto item = lst[i];
+        postCatsData metadata(item.id, item.isActive);
+        ui->postCats->addItem(item.name, QVariant::fromValue(metadata));
+    }
+
     ui->postCatActive->setChecked(true);
 
     nameDirty = false;
@@ -41,13 +49,20 @@ void SettingsWindow::on_saveButton_clicked()
     FAMLRESULT res;
     if(!nameDirty) {
         res = db->StoreNewPostCat(ui->postCatName->text());
+
         if(res == FAMLOK) {
             ui->postCats->addItem(ui->postCatName->text(), QVariant::fromValue(postCatsData(-1, true)));
+            ui->postCats->setCurrentIndex(ui->postCats->count() - 1);
         }
-    } else {
-        res = db->StorePostCat(0, ui->postCatName->text(), ui->postCatActive->isChecked());
+    } else {        
+        auto currentItem = ui->postCats->itemData(ui->postCats->currentIndex()).value<postCatsData>();
+        res = db->StorePostCat(currentItem.first, ui->postCats->currentText(), ui->postCatActive->isChecked());
+
         if(!res) {
             msg.setText("Feil under lagring av kategori");
+            return;
+        } else {
+            ui->postCats->setCurrentText(ui->postCatName->text());
         }
     }
 
@@ -62,6 +77,7 @@ void SettingsWindow::on_newPostButton_clicked()
     ui->postCats->setCurrentIndex(0);
     ui->postCatName->setText("");
     ui->postCatActive->setCheckState(Qt::Checked);
+    ui->postCatName->setFocus();
 }
 
 void SettingsWindow::on_postCats_currentIndexChanged(int index)
@@ -69,7 +85,7 @@ void SettingsWindow::on_postCats_currentIndexChanged(int index)
     if(index == 0) return;
 
     nameDirty = true;
-    postCatsData d = ui->postCats->itemData(index).value<postCatsData>();
+    auto d = ui->postCats->itemData(index).value<postCatsData>();
 
     ui->postCatName->setText(ui->postCats->currentText());
     ui->postCatActive->setChecked(d.second);

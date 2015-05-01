@@ -15,6 +15,7 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
     ui->postCats->addItem("Cato", QVariant::fromValue(postCatsData(12, true)));
     ui->postCats->addItem("Lisa", QVariant::fromValue(postCatsData(12, false)));
     ui->postCats->addItem("Hus og hjem", QVariant::fromValue(postCatsData(12, true)));
+    ui->postCatActive->setChecked(true);
 
     nameDirty = false;
 }
@@ -52,6 +53,7 @@ void SettingsWindow::on_saveButton_clicked()
 
     ui->postCatActive->setChecked(true);
     ui->postCatName->setText("");
+    nameDirty = false;
 }
 
 void SettingsWindow::on_newPostButton_clicked()
@@ -64,6 +66,8 @@ void SettingsWindow::on_newPostButton_clicked()
 
 void SettingsWindow::on_postCats_currentIndexChanged(int index)
 {
+    if(index == 0) return;
+
     nameDirty = true;
     postCatsData d = ui->postCats->itemData(index).value<postCatsData>();
 
